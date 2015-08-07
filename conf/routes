@@ -1,0 +1,29 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+
+
+
+# Map static resources from the /public folder to the /assets URL path
+#GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+
+GET  /assets/*file        controllers.Assets.at(path="/public", file)
+
+GET     /dashboard                        controllers.Home.dashboard
+GET     /record                           controllers.Record.records
+GET     /record/:id                      controllers.Record.record(id: Int)
+POST     /record                           controllers.Record.recordsubmit
+GET     /records.json                     controllers.Record.recordsjson(page:Int ?= 1,search:Option[String],filter:Option[String])
+POST     /recorddelete                           controllers.Record.recorddelete
+GET     /profile                          controllers.Account.profile
+POST     /profile                          controllers.Account.profilesubmit
+GET     /account                          controllers.Account.account
+POST     /account                          controllers.Account.accountsubmit
+GET     /                                 controllers.Application.index
+GET     /login                            controllers.Application.login
+POST    /login                            controllers.Application.loginsubmit
+GET     /logout                           controllers.Application.logout
+
+
