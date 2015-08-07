@@ -1,0 +1,189 @@
+@()(implicit usersfullname:String)
+@header("record")
+
+<div class="page-header">
+    <h1>Expenses</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+    </div>
+    <div class="col-md-4">
+        <div class="input-group">
+            <div class="input-group-btn">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                    <span id="searchtypeselected">Name</span>
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu pull-right" id="searchtypeoptions">
+                    <li><a href="#">Name</a></li>
+                    <li><a href="#">Cost</a></li>
+                    <li><a href="#">Date</a></li>
+                    <li><a href="#">Details</a></li>
+                </ul>
+            </div>
+            <input type="text" class="form-control" placeholder="Search" id="searchtxt">
+            <div class="input-group-btn">
+                <button type="button" class="btn btn-info">
+                    <span class="glyphicon glyphicon-search" aria-hidden="true" id="searchbtn"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <a href="/record/0" class="btn btn-info pull-right">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+            New Expense
+        </a>
+    </div>
+</div>
+<table class="table table-striped" id="expensesTable">
+    <thead>
+    <tr>
+        <th class="col-md-3">Name</th>
+        <th  class="col-md-2">Cost</th>
+        <th  class="col-md-1">Date</th>
+        <th  class="col-md-4">Details</th>
+        <th  class="col-md-2">Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+<div class="text-center" id="pagination">
+</div>
+
+<div id="mssg"></div>
+
+<!-- Modal -->
+<div class="modal fade" id="deleteDlg" role="dialog">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Confirm</h4>
+            </div>
+            <div class="modal-body">
+                <p>Delete record?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default deleteBtn" data-dismiss="modal">Delete</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@footer()
+
+<script>
+        function loadRecords(page,search,filter){
+            if(typeof page != 'number' && typeof page != 'undefined'){
+                return;
+            }
+
+            if(typeof page == 'undefined'){
+                page=1;
+            }
+
+            var searchparam = {
+                page:page
+            };
+
+            if(typeof search != 'undefined' && typeof filter != 'undefined' && search.length>0){
+                searchparam.search=search;
+                searchparam.filter=filter.toLowerCase();
+            }
+
+            $.ajax({
+                url:'/records.json',
+                type:'get',
+                data:searchparam,
+                dataType:'json',
+                success:function(result){
+                    if(result!=null){
+
+                        if(result.total>0){
+
+                            var pagesUIBlock=[];
+
+                            var numOfPages= Math.ceil(result.total / result.per_page);
+                            for(var a=1;a<=numOfPages;a++){
+                                if(result.current_page==a){
+                                    pagesUIBlock.push('<li class="active"><a>'+a+'</a></li>');
+                                }else{
+                                    pagesUIBlock.push('<li><a href="#" onclick="loadRecords('+a+'); return false;">'+a+'</a></li>');
+                                }
+                            }
+                            $('#pagination').html('<ul class="pagination">'+pagesUIBlock.join()+'</ul>');
+                        }else{
+                            $('#pagination').html('');
+                        }
+
+                        var recordsUIRows=[];
+                        for(var a=0,b=result.data.length;a<b;a++){
+                            var record='<tr>'
+                                       +'<td>'+result.data[a].name+'</td>'
+                                       +'<td>'+result.data[a].cost+'</td>'
+                                       +'<td>'+result.data[a].boughtdate+'</td>'
+                                       +'<td>'+result.data[a].details+'</td>'
+                                       +'<td>'
+                                       +'<a href="/record/'+result.data[a].id+'" type="button" class="btn btn-info">'
+                                       +'<span class="glyphicon glyphicon-edit" aria-hidden="true"></span>'
+                                       +'Edit'
+                                       +'</a>'
+                                       +'<button class="btn btn-danger"  data-toggle="modal" data-target="#deleteDlg" data-id="'+result.data[a].id+'">'
+                                       +'<span class="glyphicon glyphicon-remove" aria-hidden="true"></span>'
+                                       +'Remove'
+                                       +'</button>'
+                                       +'</td>'
+                                       +'</tr>';
+                             recordsUIRows.push(record);
+                        }
+                        $('#expensesTable').find('tbody').html(recordsUIRows.join());
+                    }
+                },
+                error:function(result){
+
+                }
+            });
+        }
+
+    $(document).ready(function(){
+        loadRecords();
+
+        $('#deleteDlg').on('show.bs.modal', function(e) {
+             var expenseId = $(e.relatedTarget).data('id');
+
+            $(this).find('.deleteBtn').off('click').click(function(){
+                $.ajax({
+                    url:'/recorddelete',
+                    type:'post',
+                    data:{id:expenseId},
+                    success:function(result){
+                        loadRecords();
+                        $('#deleteDlg').on('hidden.bs.modal', function () {
+                            $('#mssg').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>Delete successfully.</div>');
+                        });
+                    },
+                    error:function(){
+                        $('#deleteDlg').on('hidden.bs.modal', function () {
+                            $('#mssg').html('<div class="alert alert-danger"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>Delete fail.</div>');
+                        });
+                    }
+                });
+            });
+        });
+
+        $('#searchtypeoptions').find('a').click(function(){
+            $('#searchtypeselected').html($(this).html());
+        });
+
+        $('#searchbtn').click(function(){
+            loadRecords(1,$('#searchtxt').val(),$('#searchtypeselected').html());
+        });
+
+    });
+</script>

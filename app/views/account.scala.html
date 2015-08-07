@@ -1,0 +1,34 @@
+@()(implicit usersfullname:String,flash: Flash)
+@header("profile")
+
+<div class="page-header">
+    <h1>Account Information</h1>
+</div>
+
+@helper.form(action = routes.Account.accountsubmit(),'role->"form") {
+    <div class="form-group">
+        <label for="name">Password</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Enter Password">
+    </div>
+    <button type="submit" class="btn btn-info">Save</button>
+}
+
+@if(flash.get("error")){
+<p/>
+<div class="alert alert-danger alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="sr-only">Error:</span>
+    @flash.get("error")
+</div>
+}
+
+@if(flash.get("success")){
+<p/>
+<div class="alert alert-success">
+    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    @flash.get("success")
+</div>
+}
+
+@footer()

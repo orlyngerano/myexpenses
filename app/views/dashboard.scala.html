@@ -1,0 +1,21 @@
+@()(implicit usersfullname:String)
+
+@header("dashboard")
+
+
+<div class="page-header">
+    <h1>Dashboard</h1>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <h3 class="panel-title">Week Cost</h3>
+    </div>
+    <div class="panel-body">
+        <canvas id="myChart" style="width:100%;"></canvas>
+    </div>
+</div>
+
+@footer()
+<script src='@routes.Assets.at("javascripts/Chart.min.js")'></script>
+<script src='@routes.Assets.at("javascripts/app/app_dashboard.js")'></script>
