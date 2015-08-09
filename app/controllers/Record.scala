@@ -1,5 +1,7 @@
 package controllers
 
+import java.util.{Calendar, Date}
+
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.db.DB
@@ -183,6 +185,50 @@ class Record extends Controller with Secured{
           }
         }
       )
+  }
+
+
+  def expensejson(startdate:String,enddate:String) = Action{
+    implicit request=>
+
+      val dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
+      var startDate = dateFormat.parse(startdate)
+      val endDate = dateFormat.parse(enddate)
+      val calendar = Calendar.getInstance();
+      var expensesJson=JsArray()
+
+      DB.withConnection {
+        implicit c =>
+          val selectExpenses = SQL("select sum(cost) as costtotal,boughtdate from expenses group by boughtdate")
+          val expensesList:List[(String,Int)] = selectExpenses().map(row =>
+            row[String]("boughtdate")->row[Int]("costtotal")
+          ).toList
+
+/*
+          expensesList.foreach(r=>{
+            println(r._2)
+          })
+*/
+
+
+
+          while(startDate.compareTo(endDate)<1){
+            val date = dateFormat.format(startDate)
+            val expenses = expensesList.find{ a=> dateFormat.parse(a._1).compareTo(dateFormat.parse(date))==0 } match {
+              case None => 0
+              case x=> x.get._2
+            }
+
+            expensesJson = expensesJson.:+(JsObject(
+              Seq("date"->JsString(date),"expenses"->JsNumber(expenses))
+            ))
+            calendar.setTime(startDate)
+            calendar.add(Calendar.DAY_OF_MONTH,1)
+            startDate=calendar.getTime
+          }
+      }
+
+      Ok(Json.toJson(expensesJson))
   }
 
 

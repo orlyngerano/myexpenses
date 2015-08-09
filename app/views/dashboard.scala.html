@@ -8,14 +8,115 @@
 </div>
 
 <div class="panel panel-default">
-    <div class="panel-heading">
-        <h3 class="panel-title">Week Cost</h3>
+    <div class="panel-heading" style="text-align:center;">
+        <h3 class="panel-title" style="cursor:pointer;" id="monthyearbtn">
+            <input type="text" id="monthyear" name="monthyear" style="width:0px;height:0px;border:none;background:none;" readonly>
+            <span id="monthyearlbl"></span>&nbsp;&nbsp;
+            <span class="glyphicon glyphicon-calendar" aria-hidden="true"></span>
+        </h3>
     </div>
-    <div class="panel-body">
-        <canvas id="myChart" style="width:100%;"></canvas>
+    <div class="panel-body" id="linechartpanel">
+
     </div>
 </div>
 
 @footer()
 <script src='@routes.Assets.at("javascripts/Chart.min.js")'></script>
 <script src='@routes.Assets.at("javascripts/app/app_dashboard.js")'></script>
+
+<script>
+
+
+    function createChart(plabels,pdata){
+        if(typeof plabels == 'undefined' || plabels.constructor != Array){
+            plabels=[];
+        }
+
+        if(typeof pdata == 'undefined' || pdata.constructor != Array){
+            pdata=[];
+        }
+
+        lineChartData.labels = plabels;
+        lineChartData.datasets[0].data = pdata;
+
+        $('#linechartpanel').empty().html('<canvas id="myChart" style="width:100%;"></canvas>');
+
+        var ctx = $("#myChart").get(0).getContext("2d");
+        new Chart(ctx).Line(lineChartData, chartOptions);
+    }
+
+
+    function getDataFromServerOfDates(startdate,enddate,datahandler){
+        $.ajax({
+                url:'/expense.json',
+                type:'get',
+                data:{
+                    startdate:startdate.getFullYear()+'-'+(startdate.getMonth()+1)+'-'+startdate.getDate(),
+                    enddate:enddate.getFullYear()+'-'+(enddate.getMonth()+1)+'-'+enddate.getDate()
+                },
+                dataType:'json',
+                success:function(result){
+                    if(result!=null){
+                        datahandler(result);
+                    }
+                }
+        });
+    }
+
+
+    function getEndDateOfDate(date){
+        return new Date(date.getFullYear(),date.getMonth()+1,0);
+    }
+
+
+    function getObjectOfArraysFromJson(json){
+        var dates=[];
+        var expenses=[];
+
+
+        json.sort(function(a,b){
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+        });
+
+
+        for(var a=0,b=json.length;a<b;a++){
+            dates.push( (new Date(json[a].date)).getDate() );
+            expenses.push(json[a].expenses);
+        }
+
+        return {dates:dates,expenses:expenses};
+    }
+
+    function dataServerHandler(result){
+        var expensesObjArr = getObjectOfArraysFromJson(result);
+        createChart(expensesObjArr.dates,expensesObjArr.expenses);
+    }
+
+    $(document).ready(function(){
+
+        var months = new Array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
+        var today = new Date();
+        var defaultDate= months[today.getMonth()]+" "+today.getFullYear();
+
+        $('#monthyear').val(defaultDate);
+        $('#monthyearlbl').html(defaultDate);
+
+        $('#monthyear').datepicker({
+            format: "MM yyyy",
+            startView: "months",
+            minViewMode: "months",
+            autoclose: true
+         })
+         .on('hide',function(e){
+                $('#monthyearlbl').html(e.currentTarget.value);
+
+                getDataFromServerOfDates(e.date,getEndDateOfDate(e.date),dataServerHandler);
+         });
+
+        $('#monthyearbtn').click(function(){
+            $('#monthyear').datepicker('show');
+        });
+
+        getDataFromServerOfDates(new Date(today.getFullYear(),today.getMonth(),1),getEndDateOfDate(today),dataServerHandler);
+    });
+</script>
