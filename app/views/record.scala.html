@@ -5,7 +5,7 @@
 <div class="page-header">
     <h1>Expense</h1>
 </div>
-@helper.form(action = routes.Record.recordsubmit(),'role->"form") {
+@helper.form(action = routes.Record.recordsubmit(),'role->"form", 'id->"recordform") {
 <input type="hidden" id="id" name="id" value="@recordForm.data("id")">
     <div class="form-group">
         <label for="cost">Cost</label>
@@ -27,7 +27,8 @@
         <textarea class="form-control" id="details" name="details">@recordForm.data("details")</textarea>
     </div>
     <button type="submit" class="btn btn-info">Save</button>
-    <a href="/record" type="button" class="btn btn-info">Cancel</a>
+    <button type="button" class="btn btn-info" id="saveasnewbtn">Save as New</button>
+    <a href="/record" type="button" class="btn btn-info">Browse Expenses</a>
 }
 
 @if(flash.get("error")){
@@ -57,6 +58,11 @@
         $('#date, .input-group.date').datepicker({
             format:'yyyy-mm-dd',
             todayHighlight: true
+        });
+
+        $('#saveasnewbtn').click(function(){
+            $('#id').val(0);
+            $('#recordform').submit();
         });
     });
 </script>
