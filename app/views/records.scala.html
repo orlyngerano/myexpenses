@@ -117,7 +117,7 @@
                                     pagesUIBlock.push('<li><a href="#" onclick="loadRecords('+a+'); return false;">'+a+'</a></li>');
                                 }
                             }
-                            $('#pagination').html('<ul class="pagination">'+pagesUIBlock.join()+'</ul>');
+                            $('#pagination').html('<ul class="pagination">'+pagesUIBlock.join('')+'</ul>');
                         }else{
                             $('#pagination').html('');
                         }
