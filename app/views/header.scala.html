@@ -31,7 +31,13 @@
                     <a href="/dashboard">Dashboard</a>
                 </li>
                 <li @if(tab=="record") { class="active" }>
-                    <a href="/record">Record</a>
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        Expenses <b class="caret"></b>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a href="/record">Browse</a></li>
+                        <li><a href="/record/0">New</a></li>
+                    </ul>
                 </li>
                 <li @if(tab=="profile") { class="active" }>
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
