@@ -12,10 +12,11 @@ import play.api.Play.current
 
 class Record extends Controller with Secured{
 
+
   val recordFormTuple = Form(
     tuple(
       "id"->number,
-      "cost" -> nonEmptyText,
+      "cost" -> bigDecimal,
       "name" -> nonEmptyText,
       "boughtdate" -> nonEmptyText,
       "details" -> nonEmptyText
@@ -28,7 +29,7 @@ class Record extends Controller with Secured{
 
   def record(id: Int) = withAuth{ account=> implicit request=>
 
-    var filledRecordFormTuple=recordFormTuple.fill((id,"","","",""))
+    var filledRecordFormTuple=recordFormTuple.fill((id,0.00,"","",""))
 
     DB.withConnection{
       implicit c=>
@@ -36,7 +37,7 @@ class Record extends Controller with Secured{
         val findExpense=SQL("Select * from expenses where id={id}").on("id"->id).apply()
         if(findExpense!=Stream.empty) {
           val expense = findExpense.head;
-          val expenseMap= new Tuple5[Int,String,String,String,String](expense[Int]("id"),expense[String]("cost"),expense[String]("name"),expense[String]("boughtdate"),expense[String]("details"))
+          val expenseMap= new Tuple5[Int,BigDecimal,String,String,String](expense[Int]("id"), BigDecimal(expense[String]("cost")),expense[String]("name"),expense[String]("boughtdate"),expense[String]("details"))
           filledRecordFormTuple=recordFormTuple.fill(expenseMap)
         }
     }
@@ -200,21 +201,13 @@ class Record extends Controller with Secured{
       DB.withConnection {
         implicit c =>
           val selectExpenses = SQL("select sum(cost) as costtotal,boughtdate from expenses group by boughtdate")
-          val expensesList:List[(String,Int)] = selectExpenses().map(row =>
-            row[String]("boughtdate")->row[Int]("costtotal")
+          val expensesList:List[(String,BigDecimal)] = selectExpenses().map(row =>
+            row[String]("boughtdate")->row[BigDecimal]("costtotal")
           ).toList
-
-/*
-          expensesList.foreach(r=>{
-            println(r._2)
-          })
-*/
-
-
 
           while(startDate.compareTo(endDate)<1){
             val date = dateFormat.format(startDate)
-            val expenses = expensesList.find{ a=> dateFormat.parse(a._1).compareTo(dateFormat.parse(date))==0 } match {
+           val expenses:BigDecimal = expensesList.find{ a=> dateFormat.parse(a._1).compareTo(dateFormat.parse(date))==0 } match {
               case None => 0
               case x=> x.get._2
             }
