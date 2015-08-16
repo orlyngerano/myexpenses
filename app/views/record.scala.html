@@ -1,4 +1,4 @@
-@(recordForm:Form[(Int,String,String,String,String)])(implicit usersfullname:String,flash: Flash)
+@(recordForm:Form[(Int,BigDecimal,String,String,String)])(implicit usersfullname:String,flash: Flash)
 
 @header("record")
 
@@ -27,7 +27,9 @@
         <textarea class="form-control" id="details" name="details">@recordForm.data("details")</textarea>
     </div>
     <button type="submit" class="btn btn-info">Save</button>
-    <button type="button" class="btn btn-info" id="saveasnewbtn">Save as New</button>
+    @if(recordForm.data("id").toInt>0){
+        <button type="button" class="btn btn-info" id="saveasnewbtn">Save as New</button>
+    }
     <a href="/record" type="button" class="btn btn-info">Browse Expenses</a>
 }
 
