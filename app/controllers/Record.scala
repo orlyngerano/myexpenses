@@ -200,7 +200,7 @@ class Record extends Controller with Secured{
 
       DB.withConnection {
         implicit c =>
-          val selectExpenses = SQL("select sum(cost) as costtotal,boughtdate from expenses group by boughtdate")
+          val selectExpenses = SQL(s"select  sum(cost) as costtotal,boughtdate from expenses where date(boughtdate)>=date('${dateFormat.format(startDate)}') and  date(boughtdate)<=date('${dateFormat.format(endDate)}') group by boughtdate")
           val expensesList:List[(String,BigDecimal)] = selectExpenses().map(row =>
             row[String]("boughtdate")->row[BigDecimal]("costtotal")
           ).toList
