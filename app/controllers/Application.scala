@@ -1,15 +1,19 @@
 package controllers
 
+import java.util.regex.Pattern
 import javax.inject.Inject
 
 import play.api._
 import play.api.data._
+import play.api.data.validation._
 import play.api.db.DB
 import play.api.i18n.{MessagesApi, I18nSupport}
 import play.api.mvc._
 import play.api.data.Forms._
 import play.api.Play.current
 import anorm._
+
+import scala.util.matching.Regex
 
 class Application extends Controller{
 
@@ -25,15 +29,14 @@ class Application extends Controller{
           result=true
         }
     }
-
     result
   }
 
   val loginForm = Form(
     tuple(
-      "email"-> email,
-      "password"-> nonEmptyText
-    ) verifying("Failed to validate from DB", fields=>fields match {
+      "email"-> text.verifying(FormConstraint.emailCheckConstraint),
+      "password"-> text.verifying("Password required",!_.isEmpty)
+    ) verifying("Login failed", fields=>fields match {
       case loginData => validate(loginData._1,loginData._2)
     })
   )
@@ -41,30 +44,21 @@ class Application extends Controller{
 
   def login = Action {
     implicit request =>
-
     Ok(views.html.login())
   }
 
   def loginsubmit = Action{
-
     implicit request =>
-
-      var result:Result=NoContent
-
     loginForm.bindFromRequest.fold(
       formWithErrors =>{
-        var error="";
-        formWithErrors.errors.foreach(
-          e=> error = error+e.key+" "+e.message+", "
-        )
-        result=Redirect(routes.Application.login()).flashing("error"->error.dropRight(2))
+        val error=formWithErrors.errors.foldLeft("")( (a,b)=>a+b.message+", " ).dropRight(2)
+        Redirect(routes.Application.login()).flashing("error"->error)
       },
       loginData => {
         val session:Session=request.session+("email"->loginData._1)
-        result=Redirect(routes.Home.dashboard()).withSession(session)
+        Redirect(routes.Home.dashboard()).withSession(session)
       }
     )
-    result
   }
 
   def index = Action {
