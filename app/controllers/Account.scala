@@ -1,5 +1,6 @@
 package controllers
 
+import play.api.Logger
 import play.api.data.Forms._
 import play.api.data._
 import play.api.db.DB
@@ -12,8 +13,8 @@ class Account @Inject() extends Controller with Secured {
 
   val profileFormTuple = Form(
     tuple(
-      "name" -> nonEmptyText,
-      "email" -> email
+      "name" -> text.verifying("Name required",!_.isEmpty),
+      "email" -> text.verifying(FormConstraint.emailCheckConstraint)
     )
   )
 
@@ -25,15 +26,11 @@ class Account @Inject() extends Controller with Secured {
   def profilesubmit = withAuth{ account=> implicit request=>
 
     profileFormTuple.bindFromRequest().fold(
-      hasErrors=>{
-        var error="";
-        hasErrors.errors.foreach(
-          e=> error = error+e.key+" "+e.message+", "
-        )
-        Redirect(routes.Account.profile()).flashing("error"->error.dropRight(2))
+      formWithErrors =>{
+        val error=formWithErrors.errors.foldLeft("")( (a,b)=>a+b.message+", " ).dropRight(2)
+        Redirect(routes.Account.profile()).flashing("error"->error)
       },
       success=>{
-
         DB.withConnection{
           implicit c=>
             val rowsUpdated:Int=SQL("update users set name={name},email={email} where id={id}").on("name"->success._1,"email"->success._2, "id"->account.id).executeUpdate()
@@ -43,11 +40,8 @@ class Account @Inject() extends Controller with Secured {
               Redirect(routes.Account.profile()).flashing("error"->"Error in saving")
             }
         }
-
-
       }
     )
-
   }
 
   def account  = withAuth{ account=> implicit request=>
@@ -56,13 +50,10 @@ class Account @Inject() extends Controller with Secured {
 
 
   def accountsubmit = withAuth { account => implicit request =>
-    Form("password"->nonEmptyText).bindFromRequest().fold(
-      hasErrors =>{
-        var error="";
-        hasErrors.errors.foreach(
-          e=> error = error+e.key+" "+e.message+", "
-        )
-        Redirect(routes.Account.account()).flashing("error"->error.dropRight(2))
+    Form("password"->text.verifying("Password required",!_.isEmpty)).bindFromRequest().fold(
+      formWithErrors =>{
+        val error=formWithErrors.errors.foldLeft("")( (a,b)=>a+b.message+", " ).dropRight(2)
+        Redirect(routes.Account.account()).flashing("error"->error)
       },
       password =>{
         DB.withConnection {
