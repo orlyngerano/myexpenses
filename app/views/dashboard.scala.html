@@ -36,13 +36,39 @@
             pdata=[];
         }
 
-        lineChartData.labels = plabels;
-        lineChartData.datasets[0].data = pdata;
 
-        $('#linechartpanel').empty().html('<canvas id="myChart" style="width:100%;"></canvas>');
+        if(window.innerWidth > 800){
+            $('#linechartpanel').empty().html('<canvas id="myChart" style="width:100%;"></canvas>');
 
-        var ctx = $("#myChart").get(0).getContext("2d");
-        new Chart(ctx).Line(lineChartData, chartOptions);
+            var ctx = $("#myChart").get(0).getContext("2d");
+
+            lineChartData.labels = plabels;
+            lineChartData.datasets[0].data = pdata;
+
+            new Chart(ctx).Line(lineChartData, chartOptions);
+        }else{
+            $('#linechartpanel').empty().html('<canvas id="myChart" style="width:100%;"></canvas><canvas id="myChart2" style="width:100%;"></canvas></canvas><canvas id="myChart3" style="width:100%;">');
+
+            var ctx = $("#myChart").get(0).getContext("2d");
+
+            lineChartData.labels = plabels.slice(0,10);
+            lineChartData.datasets[0].data = pdata.slice(0,10);          
+            new Chart(ctx).Line(lineChartData, chartOptions);
+
+            var ctx2 = $("#myChart2").get(0).getContext("2d");
+
+            lineChartData.labels = plabels.slice(10,20);
+            lineChartData.datasets[0].data = pdata.slice(10,20);          
+            new Chart(ctx2).Line(lineChartData, chartOptions);     
+
+            var ctx3 = $("#myChart3").get(0).getContext("2d");
+
+            lineChartData.labels = plabels.slice(20,plabels.length);
+            lineChartData.datasets[0].data = pdata.slice(20,pdata.length);          
+            new Chart(ctx3).Line(lineChartData, chartOptions);            
+        }
+
+
     }
 
 
@@ -95,8 +121,8 @@
     $(document).ready(function(){
 
         var months = new Array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-        var today = new Date();
-        var defaultDate= months[today.getMonth()]+" "+today.getFullYear();
+        var currentSearchDate = new Date();
+        var defaultDate= months[currentSearchDate.getMonth()]+" "+currentSearchDate.getFullYear();
 
         $('#monthyear').val(defaultDate);
         $('#monthyearlbl').html(defaultDate);
@@ -109,14 +135,18 @@
          })
          .on('hide',function(e){
                 $('#monthyearlbl').html(e.currentTarget.value);
-
-                getDataFromServerOfDates(e.date,getEndDateOfDate(e.date),dataServerHandler);
+                currentSearchDate=e.date;
+                getDataFromServerOfDates(currentSearchDate,getEndDateOfDate(currentSearchDate),dataServerHandler);
          });
 
         $('#monthyearbtn').click(function(){
             $('#monthyear').datepicker('show');
         });
 
-        getDataFromServerOfDates(new Date(today.getFullYear(),today.getMonth(),1),getEndDateOfDate(today),dataServerHandler);
+        $(window).resize(function(){
+            getDataFromServerOfDates(new Date(currentSearchDate.getFullYear(),currentSearchDate.getMonth(),1),getEndDateOfDate(currentSearchDate),dataServerHandler);
+        });
+
+        getDataFromServerOfDates(new Date(currentSearchDate.getFullYear(),currentSearchDate.getMonth(),1),getEndDateOfDate(currentSearchDate),dataServerHandler);
     });
 </script>
